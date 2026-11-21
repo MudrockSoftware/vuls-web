@@ -4,32 +4,42 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
-    <.live_title default="Vulsweb" suffix=" · Phoenix Framework" phx-no-format>{assigns[:page_title]}</.live_title>
+    <meta name="robots" content="noindex, nofollow" />
+    <.live_title default="vulsweb" suffix=" · vulsweb" phx-no-format>{assigns[:page_title]}</.live_title>
+    <link rel="icon" type="image/svg+xml" href={~p"/favicon.svg"} />
+    <link
+      rel="preload"
+      href={~p"/fonts/inter-latin-wght-normal.woff2"}
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
     </script>
     <script>
       (() => {
-        const systemTheme = () => matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        const LIGHT = "mudrock", DARK = "mudrock-dark";
+        const systemTheme = () => matchMedia("(prefers-color-scheme: dark)").matches ? DARK : LIGHT;
 
         const setTheme = (theme) => {
-          if (theme === "system") {
-            localStorage.removeItem("phx:theme");
+          if (theme !== LIGHT && theme !== DARK) {
+            localStorage.removeItem("vulsweb:theme");
             document.documentElement.setAttribute("data-theme", systemTheme());
             document.documentElement.setAttribute("data-theme-source", "system");
           } else {
-            localStorage.setItem("phx:theme", theme);
+            localStorage.setItem("vulsweb:theme", theme);
             document.documentElement.setAttribute("data-theme", theme);
             document.documentElement.setAttribute("data-theme-source", "user");
           }
         };
         if (!document.documentElement.hasAttribute("data-theme")) {
-          setTheme(localStorage.getItem("phx:theme") || "system");
+          setTheme(localStorage.getItem("vulsweb:theme") || "system");
         }
-        window.addEventListener("storage", (e) => e.key === "phx:theme" && setTheme(e.newValue || "system"));
+        window.addEventListener("storage", (e) => e.key === "vulsweb:theme" && setTheme(e.newValue || "system"));
         window.addEventListener("phx:set-theme", (e) => setTheme(e.target.dataset.phxTheme));
 
-        matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+        matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
           if (document.documentElement.getAttribute("data-theme-source") === "system") {
             document.documentElement.setAttribute("data-theme", systemTheme());
           }
@@ -37,7 +47,7 @@
       })();
     </script>
   </head>
-  <body>
+  <body class="bg-base-100 font-sans text-base-content antialiased">
     {@inner_content}
   </body>
 </html>

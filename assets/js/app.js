@@ -1,83 +1,65 @@
-// If you want to use Phoenix channels, run `mix help phx.gen.channel`
-// to get started and then uncomment the line below.
-// import "./user_socket.js"
-
-// You can include dependencies in two ways.
-//
-// The simplest option is to put them in assets/vendor and
-// import them using relative paths:
-//
-//     import "../vendor/some-package.js"
-//
-// Alternatively, you can `npm install some-package --prefix assets` and import
-// them using a path starting with the package name:
-//
-//     import "some-package"
-//
-// If you have dependencies that try to import CSS, esbuild will generate a separate `app.css` file.
-// To load it, simply add a second `<link>` to your `root.html.heex` file.
-
-// Include phoenix_html to handle method=PUT/DELETE in forms and buttons.
+// Phoenix JS comes from the Hex deps (resolved via tsconfig.json paths),
+// UI packages (topbar, ...) are installed from npm with bun.
 import "phoenix_html"
-// Establish Phoenix Socket and LiveView configuration.
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
-import {hooks as colocatedHooks} from "phoenix-colocated/vulsweb"
-import topbar from "../vendor/topbar"
+import topbar from "topbar"
+
+const Hooks = {}
+
+// Copies `data-copy` to the clipboard and briefly flips the label.
+Hooks.CopyToClipboard = {
+  mounted() {
+    this.el.addEventListener("click", () => {
+      const text = this.el.dataset.copy
+      if (!text || !navigator.clipboard) return
+      navigator.clipboard.writeText(text).then(() => {
+        this.el.dataset.copied = "true"
+        setTimeout(() => delete this.el.dataset.copied, 1200)
+      })
+    })
+  },
+}
+
+// Renders an ISO-8601 timestamp in the browser's locale and timezone.
+Hooks.LocalTime = {
+  mounted() { this.render() },
+  updated() { this.render() },
+  render() {
+    const iso = this.el.dataset.iso
+    if (!iso) return
+    const d = new Date(iso)
+    if (isNaN(d)) return
+    this.el.textContent = d.toLocaleString(undefined, {
+      year: "numeric", month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit",
+    })
+    this.el.title = d.toISOString()
+  },
+}
+
+// "/" focuses the search box, like most dashboards.
+window.addEventListener("keydown", e => {
+  if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey) return
+  const t = e.target
+  if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t.isContentEditable) return
+  const search = document.querySelector("[data-search-input]")
+  if (search) { e.preventDefault(); search.focus(); search.select() }
+})
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
-  hooks: {...colocatedHooks},
+  hooks: Hooks,
 })
 
-// Show progress bar on live navigation and form submits
-topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
+// Show progress bar on live navigation and form submits (mudrock primary)
+topbar.config({barColors: {0: "#6e4a7e"}, shadowColor: "rgba(0, 0, 0, .2)"})
 window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
 window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
 
-// connect if there are any LiveViews on the page
 liveSocket.connect()
 
 // expose liveSocket on window for web console debug logs and latency simulation:
 // >> liveSocket.enableDebug()
-// >> liveSocket.enableLatencySim(1000)  // enabled for duration of browser session
-// >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
-
-// The lines below enable quality of life phoenix_live_reload
-// development features:
-//
-//     1. stream server logs to the browser console
-//     2. click on elements to jump to their definitions in your code editor
-//
-if (process.env.NODE_ENV === "development") {
-  window.addEventListener("phx:live_reload:attached", ({detail: reloader}) => {
-    // Enable server log streaming to client.
-    // Disable with reloader.disableServerLogs()
-    reloader.enableServerLogs()
-
-    // Open configured PLUG_EDITOR at file:line of the clicked element's HEEx component
-    //
-    //   * click with "c" key pressed to open at caller location
-    //   * click with "d" key pressed to open at function component definition location
-    let keyDown
-    window.addEventListener("keydown", e => keyDown = e.key)
-    window.addEventListener("keyup", _e => keyDown = null)
-    window.addEventListener("click", e => {
-      if(keyDown === "c"){
-        e.preventDefault()
-        e.stopImmediatePropagation()
-        reloader.openEditorAtCaller(e.target)
-      } else if(keyDown === "d"){
-        e.preventDefault()
-        e.stopImmediatePropagation()
-        reloader.openEditorAtDef(e.target)
-      }
-    }, true)
-
-    window.liveReloader = reloader
-  })
-}
-

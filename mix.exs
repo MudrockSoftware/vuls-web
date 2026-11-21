@@ -1,23 +1,23 @@
 defmodule Vulsweb.MixProject do
   use Mix.Project
 
+  @version "0.1.0"
+
   def project do
     [
       app: :vulsweb,
-      version: "0.1.0",
+      version: @version,
       elixir: "~> 1.17",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
+      releases: releases(),
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
       listeners: [Phoenix.CodeReloader]
     ]
   end
 
-  # Configuration for the OTP application.
-  #
-  # Type `mix help compile.app` for more information.
   def application do
     [
       mod: {Vulsweb.Application, []},
@@ -31,70 +31,49 @@ defmodule Vulsweb.MixProject do
     ]
   end
 
-  # Specifies which paths to compile per environment.
-  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  # support/ holds the sample data generator (dev + test only).
+  defp elixirc_paths(:test), do: ["lib", "support", "test/support"]
+  defp elixirc_paths(:dev), do: ["lib", "support"]
   defp elixirc_paths(_), do: ["lib"]
 
-  # Specifies your project dependencies.
-  #
-  # Type `mix help deps` for examples and options.
+  # Elixir/Erlang deps come from Hex. Frontend deps (tailwind, daisyui,
+  # lucide-static, topbar, fonts) are installed with bun, see assets/package.json.
   defp deps do
     [
-      {:phoenix, "~> 1.8.16"},
-      {:phoenix_ecto, "~> 4.5"},
-      {:ecto_sql, "~> 3.13"},
-      {:postgrex, ">= 0.0.0"},
+      {:phoenix, "~> 1.8.17"},
       {:phoenix_html, "~> 4.1"},
+      {:phoenix_live_view, "~> 1.2.15"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
-      {:phoenix_live_view, "~> 1.2.0"},
       {:lazy_html, ">= 0.1.0", only: :test},
-      {:phoenix_live_dashboard, "~> 0.8.3"},
-      {:esbuild, "~> 0.10", runtime: Mix.env() == :dev},
-      {:tailwind, "~> 0.5", runtime: Mix.env() == :dev},
-      {:heroicons,
-       github: "tailwindlabs/heroicons",
-       tag: "v2.2.0",
-       sparse: "optimized",
-       app: false,
-       compile: false,
-       depth: 1},
-      {:daisyui,
-       github: "saadeghi/daisyui",
-       tag: "v5.5.20",
-       sparse: "packages/bundle",
-       app: false,
-       compile: false,
-       depth: 1},
-      {:swoosh, "~> 1.16"},
-      {:req, "~> 0.5"},
-      {:telemetry_metrics, "~> 1.0"},
-      {:telemetry_poller, "~> 1.0"},
-      {:gettext, "~> 1.0"},
       {:jason, "~> 1.2"},
-      {:dns_cluster, "~> 0.2.0"},
-      {:bandit, "~> 1.5"}
+      {:bandit, "~> 1.5"},
+      {:burrito_ng, "~> 1.0", runtime: false}
     ]
   end
 
-  # Aliases are shortcuts or tasks specific to the current project.
-  # For example, to install project dependencies and perform other setup tasks, run:
-  #
-  #     $ mix setup
-  #
-  # See the documentation for `Mix` for more info on aliases.
+  # `MIX_ENV=prod mix release` produces single-file executables in
+  # burrito_ng_out/. Pick a single target with BURRITO_NG_TARGET=linux_amd64.
+  defp releases do
+    [
+      vulsweb: [
+        steps: [:assemble, &BurritoNg.wrap/1],
+        burrito_ng: [
+          targets: [
+            linux_amd64: [os: :linux, cpu: :x86_64],
+            linux_arm64: [os: :linux, cpu: :aarch64]
+          ]
+        ]
+      ]
+    ]
+  end
+
   defp aliases do
     [
-      setup: ["deps.get", "ecto.setup", "assets.setup", "assets.build"],
-      "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
-      "ecto.reset": ["ecto.drop", "ecto.setup"],
-      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
-      "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
-      "assets.build": ["compile", "tailwind vulsweb", "esbuild vulsweb"],
-      "assets.deploy": [
-        "tailwind vulsweb --minify",
-        "esbuild vulsweb --minify",
-        "phx.digest"
-      ],
+      setup: ["deps.get", "assets.setup", "assets.build"],
+      "assets.setup": ["cmd --cd assets bun install --frozen-lockfile"],
+      "assets.build": ["compile", "cmd --cd assets bun run build"],
+      "assets.deploy": ["cmd --cd assets bun run deploy", "phx.digest"],
+      "vulsweb.build": ["assets.deploy", "release --overwrite"],
       precommit: ["compile --warnings-as-errors", "deps.unlock --unused", "format", "test"]
     ]
   end

@@ -1,4 +1,8 @@
 [tools]
 bun = "1.4"
 elixir = "1.20"
-erlang = "29"
+# burrito_ng needs a pre-compiled musl ERTS for the *exact* OTP version used to build.
+# beam-machine currently publishes OTP-29.1 (not 29.1.x), so pin it here.
+erlang = "29.1"
+# burrito_ng builds its wrapper with cargo, statically linked against musl.
+rust = { version = "1.99", targets = "x86_64-unknown-linux-musl,aarch64-unknown-linux-musl" }

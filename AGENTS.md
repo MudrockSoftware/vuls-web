@@ -2,6 +2,15 @@ This is a web application written using the Phoenix web framework.
 
 ## Project guidelines
 
+- vulsweb is a read-only web UI for vuls result JSON files: no database, no Ecto. Results are
+  indexed by `Vulsweb.Results.Store` (ETS) and read through `Vulsweb.Results`
+- Severity/score/fix-status logic must stay in sync with vuls (`models/vulninfos.go`), see `Vulsweb.Vuls.Scoring` and `Vulsweb.Vuls.Report`
+- Toolchain is pinned in `mise.toml`; run tools via `mise exec -- mix ...` if your shell was activated before entering the project
+  (erlang must stay on an OTP version that beam-machine publishes a pre-compiled musl ERTS for, burrito_ng needs the exact version)
+- UI packages come from npm via **bun** (`assets/package.json`), Elixir deps from Hex. Phoenix JS is resolved from `deps/` via `assets/tsconfig.json` paths
+- Sample data for dev/tests: `mix vulsweb.gen.sample` / `Vulsweb.Sample` (in `support/`, dev+test only)
+- Single binary: `MIX_ENV=prod mix assets.deploy && MIX_ENV=prod mix release` (burrito_ng, output in `burrito_ng_out/`)
+
 - Use `mix precommit` alias when you are done with all changes and fix any pending issues
 - Use the already included and available `:req` (`Req`) library for HTTP requests, **avoid** `:httpoison`, `:tesla`, and `:httpc`. Req is included by default and is the preferred HTTP client for Phoenix apps
 
@@ -13,7 +22,7 @@ This is a web application written using the Phoenix web framework.
   - You failed to follow the Authenticated Routes guidelines, or you failed to pass `current_scope` to `<Layouts.app>`
   - **Always** fix the `current_scope` error by moving your routes to the proper `live_session` and ensure you pass `current_scope` as needed
 - Phoenix v1.8 moved the `<.flash_group>` component to the `Layouts` module. You are **forbidden** from calling `<.flash_group>` outside of the `layouts.ex` module
-- Out of the box, `core_components.ex` imports an `<.icon name="hero-x-mark" class="w-5 h-5"/>` component for hero icons. **Always** use the `<.icon>` component for icons, **never** use `Heroicons` modules or similar
+- `core_components.ex` provides an `<.icon name="lucide-x" class="size-5"/>` component for [Lucide](https://lucide.dev/icons) icons (from the `lucide-static` npm package, see `assets/vendor/lucide.js`). **Always** use the `<.icon>` component with `lucide-<name>` for icons, **never** use heroicons, inline SVGs or icon modules
 - **Always** use the imported `<.input>` component for form inputs from `core_components.ex` when available. `<.input>` is imported and using it will save steps and prevent errors
 - If you override the default input classes (`<.input class="myclass px-2 py-1 rounded-lg">)`) class with your own values, no default classes are inherited, so your
 custom classes must fully style the input
@@ -121,17 +130,6 @@ custom classes must fully style the input
 - `Phoenix.View` no longer is needed or included with Phoenix, don't use it
 <!-- phoenix:phoenix-end -->
 
-<!-- phoenix:ecto-start -->
-## Ecto Guidelines
-
-- **Always** preload Ecto associations in queries when they'll be accessed in templates, ie a message that needs to reference the `message.user.email`
-- Remember `import Ecto.Query` and other supporting modules when you write `seeds.exs`
-- `Ecto.Schema` fields always use the `:string` type, even for `:text`, columns, ie: `field :name, :string`
-- `Ecto.Changeset.validate_number/2` **DOES NOT SUPPORT the `:allow_nil` option**. By default, Ecto validations only run if a change for the given field exists and the change value is not nil, so such as option is never needed
-- You **must** use `Ecto.Changeset.get_field(changeset, :field)` to access changeset fields
-- Fields which are set programmatically, such as `user_id`, must not be listed in `cast` calls or similar for security purposes. Instead they must be explicitly set when creating the struct
-- **Always** invoke `mix ecto.gen.migration migration_name_using_underscores` when generating migration files, so the correct timestamp and conventions are applied
-<!-- phoenix:ecto-end -->
 
 <!-- phoenix:html-start -->
 ## Phoenix HTML guidelines

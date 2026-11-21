@@ -1,37 +1,27 @@
-# The directory Mix will write compiled artifacts to.
 /_build/
-
-# If you run "mix test --cover", coverage assets end up here.
 /cover/
-
-# The directory Mix downloads your dependencies sources to.
 /deps/
-
-# Where 3rd-party dependencies like ExDoc output generated docs.
 /doc/
-
-# Ignore .fetch files in case you like to edit your project deps locally.
 /.fetch
-
-# If the VM crashes, it generates a dump, let's ignore it too.
 erl_crash.dump
-
-# Also ignore archive artifacts (built via "mix archive.build").
 *.ez
-
-# Temporary files, for example, from tests.
 /tmp/
-
-# Ignore package tarball (built via "mix hex.build").
 vulsweb-*.tar
 
-# Ignore assets that are produced by build tools.
+# Assets produced by build tools.
 /priv/static/assets/
-
-# Ignore digested assets cache.
 /priv/static/cache_manifest.json
+/priv/static/**/*.gz
+/priv/static/**/*-????????????????????????????????.*
 
-# In case you use Node.js/npm, you want to ignore these.
-npm-debug.log
+# bun
 /assets/node_modules/
 
+# burrito_ng output
+/burrito_ng_out/
+
+# local sample data (mix vulsweb.gen.sample)
+/sample/
+
+# fonts copied from node_modules by `bun run build:fonts`
+/priv/static/fonts/

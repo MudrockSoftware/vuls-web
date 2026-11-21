@@ -1,29 +1,13 @@
-// This file is needed on most editors to enable the intelligent autocompletion
-// of LiveView's JavaScript API methods. You can safely delete it if you don't need it.
-//
-// Note: This file assumes a basic esbuild setup without node_modules.
-// We include a generic paths alias to deps to mimic how esbuild resolves
-// the Phoenix and LiveView JavaScript assets.
-// If you have a package.json in your project, you should remove the
-// paths configuration and instead add the phoenix dependencies to the
-// dependencies section of your package.json:
-//
-// {
-//   ...
-//   "dependencies": {
-//     ...,
-//     "phoenix": "../deps/phoenix",
-//     "phoenix_html": "../deps/phoenix_html",
-//     "phoenix_live_view": "../deps/phoenix_live_view"
-//   }
-// }
-//
-// Feel free to adjust this configuration however you need.
+// Phoenix JS packages come from the Hex deps (../deps/*), not from npm.
+// `bun build` honors these `paths`, and editors use them for autocompletion.
+// UI packages from npm (topbar, ...) resolve from node_modules as usual.
 {
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "*": ["../deps/*"]
+      "phoenix": ["../deps/phoenix"],
+      "phoenix_html": ["../deps/phoenix_html"],
+      "phoenix_live_view": ["../deps/phoenix_live_view"]
     },
     "allowJs": true,
     "noEmit": true

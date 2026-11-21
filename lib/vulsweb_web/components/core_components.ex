@@ -19,7 +19,7 @@ defmodule VulswebWeb.CoreComponents do
       we build on. You will use it for layout, sizing, flexbox, grid, and
       spacing.
 
-    * [Heroicons](https://heroicons.com) - see `icon/1` for usage.
+    * [Lucide](https://lucide.dev/icons) - see `icon/1` for usage.
 
     * [Phoenix.Component](https://phoenix-live-view.hexdocs.pm/Phoenix.Component.html) -
       the component system used by Phoenix. Some components, such as `<.link>`
@@ -27,7 +27,6 @@ defmodule VulswebWeb.CoreComponents do
 
   """
   use Phoenix.Component
-  use Gettext, backend: VulswebWeb.Gettext
 
   alias Phoenix.LiveView.JS
 
@@ -71,15 +70,15 @@ defmodule VulswebWeb.CoreComponents do
         @kind == :info && "alert-info",
         @kind == :error && "alert-error"
       ]}>
-        <.icon :if={@kind == :info} name="hero-information-circle" class="size-5 shrink-0" />
-        <.icon :if={@kind == :error} name="hero-exclamation-circle" class="size-5 shrink-0" />
+        <.icon :if={@kind == :info} name="lucide-info" class="size-5 shrink-0" />
+        <.icon :if={@kind == :error} name="lucide-circle-alert" class="size-5 shrink-0" />
         <div>
           <p :if={@title} class="font-semibold">{@title}</p>
           <p>{msg}</p>
         </div>
         <div class="flex-1" />
-        <button type="button" class="group self-start cursor-pointer" aria-label={gettext("close")}>
-          <.icon name="hero-x-mark" class="size-5 opacity-40 group-hover:opacity-70" />
+        <button type="button" class="group self-start cursor-pointer" aria-label="close">
+          <.icon name="lucide-x" class="size-5 opacity-40 group-hover:opacity-70" />
         </button>
       </div>
     </div>
@@ -306,7 +305,7 @@ defmodule VulswebWeb.CoreComponents do
   defp error(assigns) do
     ~H"""
     <p class="mt-1.5 flex gap-2 items-center text-sm text-error">
-      <.icon name="hero-exclamation-circle" class="size-5" />
+      <.icon name="lucide-circle-alert" class="size-5" />
       {render_slot(@inner_block)}
     </p>
     """
@@ -372,7 +371,7 @@ defmodule VulswebWeb.CoreComponents do
         <tr>
           <th :for={col <- @col}>{col[:label]}</th>
           <th :if={@action != []}>
-            <span class="sr-only">{gettext("Actions")}</span>
+            <span class="sr-only">Actions</span>
           </th>
         </tr>
       </thead>
@@ -426,29 +425,23 @@ defmodule VulswebWeb.CoreComponents do
   end
 
   @doc """
-  Renders a [Heroicon](https://heroicons.com).
+  Renders a [Lucide](https://lucide.dev/icons) icon.
 
-  Heroicons come in three styles – outline, solid, and mini.
-  By default, the outline style is used, but solid and mini may
-  be applied by using the `-solid` and `-mini` suffix.
-
-  You can customize the size and colors of the icons by setting
-  width, height, and background color classes.
-
-  Icons are extracted from the `deps/heroicons` directory and bundled within
-  your compiled app.css by the plugin in `assets/vendor/heroicons.js`.
+  Icons come from the `lucide-static` npm package (installed with bun) and are
+  bundled into app.css as CSS masks by the plugin in `assets/vendor/lucide.js`,
+  so they take the current text color. Size them with `size-*` classes.
 
   ## Examples
 
-      <.icon name="hero-x-mark" />
-      <.icon name="hero-arrow-path" class="ml-1 size-3 motion-safe:animate-spin" />
+      <.icon name="lucide-x" />
+      <.icon name="lucide-refresh-cw" class="ml-1 size-3 motion-safe:animate-spin" />
   """
   attr :name, :string, required: true
   attr :class, :any, default: "size-4"
 
-  def icon(%{name: "hero-" <> _} = assigns) do
+  def icon(%{name: "lucide-" <> _} = assigns) do
     ~H"""
-    <span class={[@name, @class]} />
+    <span class={[@name, @class]} aria-hidden="true" />
     """
   end
 
@@ -476,24 +469,12 @@ defmodule VulswebWeb.CoreComponents do
   end
 
   @doc """
-  Translates an error message using gettext.
+  Formats an error message, interpolating `%{key}` placeholders from opts.
   """
   def translate_error({msg, opts}) do
-    # When using gettext, we typically pass the strings we want
-    # to translate as a static argument:
-    #
-    #     # Translate the number of files with plural rules
-    #     dngettext("errors", "1 file", "%{count} files", count)
-    #
-    # However the error messages in our forms and APIs are generated
-    # dynamically, so we need to translate them by calling Gettext
-    # with our gettext backend as first argument. Translations are
-    # available in the errors.po file (as we use the "errors" domain).
-    if count = opts[:count] do
-      Gettext.dngettext(VulswebWeb.Gettext, "errors", msg, msg, count, opts)
-    else
-      Gettext.dgettext(VulswebWeb.Gettext, "errors", msg, opts)
-    end
+    Enum.reduce(opts, msg, fn {key, value}, acc ->
+      String.replace(acc, "%{#{key}}", fn _ -> to_string(value) end)
+    end)
   end
 
   @doc """

@@ -17,7 +17,7 @@ defmodule VulswebWeb do
   those modules here.
   """
 
-  def static_paths, do: ~w(assets fonts images favicon.ico robots.txt)
+  def static_paths, do: ~w(assets fonts favicon.svg robots.txt)
 
   def router do
     quote do
@@ -39,8 +39,6 @@ defmodule VulswebWeb do
   def controller do
     quote do
       use Phoenix.Controller, formats: [:html, :json]
-
-      use Gettext, backend: VulswebWeb.Gettext
 
       import Plug.Conn
 
@@ -79,17 +77,16 @@ defmodule VulswebWeb do
 
   defp html_helpers do
     quote do
-      # Translation
-      use Gettext, backend: VulswebWeb.Gettext
-
       # HTML escaping functionality
       import Phoenix.HTML
       # Core UI components
       import VulswebWeb.CoreComponents
+      import VulswebWeb.VulnComponents
 
       # Common modules used in templates
       alias Phoenix.LiveView.JS
       alias VulswebWeb.Layouts
+      alias VulswebWeb.Format
 
       # Routes generation with the ~p sigil
       unquote(verified_routes())
