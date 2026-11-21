@@ -7,6 +7,8 @@ defmodule Vulsweb.MixProject do
     [
       app: :vulsweb,
       version: @version,
+      description: "A web UI for vuls vulnerability scan results",
+      package: [licenses: ["GPL-3.0-or-later"], maintainers: ["MUDROCK SOFTWARE LTD"]],
       elixir: "~> 1.17",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
