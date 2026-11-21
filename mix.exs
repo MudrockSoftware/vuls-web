@@ -5,7 +5,7 @@ defmodule Vulsweb.MixProject do
   # VULSWEB_VERSION. A new version per build also matters for burrito_ng: it
   # only unpacks a payload whose version is not installed yet.
   @version (case System.get_env("VULSWEB_VERSION", "") do
-              "" -> "0.1.0"
+              "" -> "0.1.1"
               v -> v |> String.trim_leading("v") |> Version.parse!() |> to_string()
             end)
 
