@@ -81,6 +81,15 @@ defmodule Vulsweb.Vuls.CompatTest do
     assert Compat.normalize(doc) == {:ok, doc}
   end
 
+  test "accepts jsonVersion 0 written by vuls server mode" do
+    doc = %{
+      "jsonVersion" => 0,
+      "scannedCves" => %{"CVE-1" => %{"cveContents" => %{"nvd" => [%{"cvss3Score" => 9.8}]}}}
+    }
+
+    assert Compat.normalize(doc) == {:ok, doc}
+  end
+
   test "rejects result files from vuls before v0.5.0" do
     assert {:error, "unsupported result format (jsonVersion 3" <> _} =
              Compat.normalize(%{"jsonVersion" => 3, "scannedCves" => %{}})

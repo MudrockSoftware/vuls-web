@@ -14,6 +14,10 @@ defmodule Vulsweb.Vuls.Compat do
 
   Files written by vuls before v0.5.0 (jsonVersion 2 and 3) use a different
   format and are rejected with an explanatory error.
+
+  `vuls server` (HTTP mode) never sets `jsonVersion`, so its results carry
+  `"jsonVersion": 0` despite being in the current layout; 0 is therefore not
+  treated as legacy.
   """
 
   @current_version 4
@@ -29,7 +33,7 @@ defmodule Vulsweb.Vuls.Compat do
 
   @doc "Normalizes a decoded result document."
   @spec normalize(map()) :: {:ok, map()} | {:error, String.t()}
-  def normalize(%{"jsonVersion" => v}) when is_integer(v) and v < @current_version do
+  def normalize(%{"jsonVersion" => v}) when is_integer(v) and v > 0 and v < @current_version do
     {:error,
      "unsupported result format (jsonVersion #{v}, written by vuls older than v0.5.0); " <>
        "re-run the scan with a current vuls"}
