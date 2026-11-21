@@ -169,6 +169,29 @@ the version in `mix.exs` for every build you deploy**, otherwise hosts that
 already ran an older build keep running its unpacked code. Or delete the install
 dir (`./vulsweb_linux_amd64 maintenance directory` prints it).
 
+## Releasing
+
+Push a version tag:
+
+```sh
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+`.github/workflows/release.yaml` then:
+
+1. runs the format check, a warnings-as-errors compile and the test suite,
+2. builds the single-file binaries for linux amd64 and arm64 and a multi-arch
+   image, from the same Dockerfile and with a shared build cache,
+3. pushes the image to `ghcr.io/<owner>/<repo>` with tags `1.2.3`, `1.2` and
+   `latest`, plus provenance and an SBOM,
+4. creates a GitHub release with `vulsweb_1.2.3_linux_{amd64,arm64}` and `SHA256SUMS`.
+
+The tag sets the app version (`VULSWEB_VERSION`), so `mix.exs` doesn't need a
+bump. Tags with a suffix (`v1.2.3-rc.1`) create a pre-release and leave `1.2` and
+`latest` alone. The first push creates the GHCR package as private; make it
+public in the package settings if anyone should pull it without logging in.
+
 ## License
 
 Copyright (C) 2026 MUDROCK SOFTWARE LTD

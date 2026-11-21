@@ -5,13 +5,19 @@
 #   docker build -t vulsweb .
 #   docker buildx build --platform linux/amd64,linux/arm64 -t vulsweb .
 #
+# Only the single-file binaries (dist/linux_amd64/vulsweb, ...):
+#   docker buildx build --platform linux/amd64,linux/arm64 --target binary \
+#     --output type=local,dest=dist .
+#
 # The builder always runs on the build machine's architecture; burrito_ng
 # cross-builds the binary for TARGETARCH with a pre-compiled musl ERTS.
 
 ARG MISE_VERSION=2026.10.25
 ARG DEBIAN_VERSION=trixie-20261104-slim
 
-FROM jdxcode/mise:${MISE_VERSION} AS mise
+# Runs on the build machine like the builder below (otherwise a multi-arch
+# build copies the arm64 mise binary into the amd64 builder).
+FROM --platform=$BUILDPLATFORM jdxcode/mise:${MISE_VERSION} AS mise
 
 # ---------------------------------------------------------------------------
 FROM --platform=$BUILDPLATFORM debian:${DEBIAN_VERSION} AS build
@@ -54,10 +60,19 @@ COPY priv priv
 COPY assets assets
 RUN mix assets.deploy
 
+# Release version (e.g. from the git tag); defaults to the one in mix.exs.
+ARG VERSION=""
+ENV VULSWEB_VERSION=${VERSION}
+
 # TARGETARCH is amd64 or arm64, matching the burrito_ng target names in mix.exs.
 ARG TARGETARCH
 RUN BURRITO_NG_TARGET=linux_${TARGETARCH} mix release \
  && cp burrito_ng_out/vulsweb_linux_${TARGETARCH} /vulsweb
+
+# ---------------------------------------------------------------------------
+# Just the binary, for `docker buildx build --target binary --output ...`.
+FROM scratch AS binary
+COPY --from=build /vulsweb /vulsweb
 
 # ---------------------------------------------------------------------------
 FROM gcr.io/distroless/static-debian13:nonroot
